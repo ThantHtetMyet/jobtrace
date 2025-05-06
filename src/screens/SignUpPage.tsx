@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -21,11 +21,15 @@ import { translations } from '../translations';
 import LanguageToggle from '../ui_element/LanguageToggle';
 import BackButton from '../ui_element/BackButton';
 import { setLanguage } from '../redux/slices/languageSlice';
+import { initializeFirebase, getDatabase } from '../config/firebase';
 
 const SignUpPage = ({ navigation }: any) => {
   const isDarkMode = useColorScheme() === 'dark';
   const dispatch = useDispatch();
   const currentLanguage = useSelector((state: RootState) => state.language.currentLanguage);
+  
+  // Remove the useEffect that's causing the issue
+  // We don't need to dispatch setLanguage on focus as Redux is already handling the state
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
   const [address, setAddress] = useState('');
@@ -94,9 +98,89 @@ const SignUpPage = ({ navigation }: any) => {
     return true;
   };
 
-  const handleSubmit = () => {
+  const generateDefaultPassword = () => {
+    // Generate a 6-digit random numeric password
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
+  useEffect(() => {
+    initializeFirebase();
+  }, []);
+
+  const handleSubmit = async () => {
     if (validateForm()) {
-      console.log('Submit with:', { name, mobile, address });
+      try {
+        const db = getDatabase();
+        const userRef = db.ref('/users');
+        
+        // Check if user already exists
+        const snapshot = await userRef
+          .orderByChild('userid')
+          .equalTo(mobile.trim())
+          .once('value');
+
+        if (snapshot.exists()) {
+          // User already exists
+          setErrorMessages([
+            currentLanguage === 'my' 
+              ? 'ဖုန်းနံပါတ်သည် မှတ်ပုံတင်ထားပြီးဖြစ်သည်။'
+              : 'Phone number is already registered.'
+          ]);
+          setModalVisible(true);
+          return;
+        }
+
+        const userData = {
+          userid: mobile.trim(),
+          name: name.trim(),
+          phoneNo: mobile.trim(),
+          address: address.trim(),
+          accountStatus: 'pending',
+          isDeleted: 0,
+          createDate: new Date().toLocaleString('en-US', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+          }),
+          modifiedDate: null,
+          password: generateDefaultPassword(),
+          firsttimelogin: true
+        };
+
+        await userRef.push(userData);
+
+        // Show success message
+        setErrorMessages([
+          currentLanguage === 'my' 
+            ? 'အောင်မြင်စွာ မှတ်ပုံတင်ပြီးပါပြီ' 
+            : 'Registration successful!'
+        ]);
+        setModalVisible(true);
+
+        // Clear form
+        setName('');
+        setMobile('');
+        setAddress('');
+
+        // Navigate back after successful registration
+        setTimeout(() => {
+          navigation.goBack();
+        }, 2000);
+
+      } catch (error) {
+        // Show error message
+        setErrorMessages([
+          currentLanguage === 'my' 
+            ? 'မှတ်ပုံတင်ခြင်း မအောင်မြင်ပါ။ ထပ်မံကြိုးစားကြည့်ပါ။' 
+            : 'Registration failed. Please try again.'
+        ]);
+        setModalVisible(true);
+        console.error('Error saving data:', error);
+      }
     }
   };
 
@@ -117,6 +201,7 @@ const SignUpPage = ({ navigation }: any) => {
           <LanguageToggle 
             onLanguageChange={handleLanguageChange}
             initialLanguage={currentLanguage}
+            selectedLanguage={currentLanguage}  // Add this prop
           />
         </View>
       </View>

@@ -31,6 +31,11 @@ const HomePage = ({ navigation }: any) => {
   const dispatch = useDispatch();
   const currentLanguage = useSelector((state: RootState) => state.language.currentLanguage);
   
+  // Remove this duplicate declaration
+  // const handleLanguageChange = (language: 'en' | 'my') => {
+  //   dispatch(setLanguage(language));
+  // };
+  
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
@@ -66,6 +71,7 @@ const HomePage = ({ navigation }: any) => {
           <LanguageToggle 
             onLanguageChange={handleLanguageChange}
             initialLanguage={currentLanguage}
+            selectedLanguage={currentLanguage}  // Add this prop
           />
         </View>
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   TouchableOpacity,
   Text,
@@ -8,38 +8,35 @@ import {
 
 interface LanguageToggleProps {
   onLanguageChange: (language: 'en' | 'my') => void;
-  initialLanguage?: 'en' | 'my';
+  initialLanguage: 'en' | 'my';
+  selectedLanguage: 'en' | 'my';
 }
 
 const LanguageToggle: React.FC<LanguageToggleProps> = ({
   onLanguageChange,
-  initialLanguage = 'en'
+  selectedLanguage,
 }) => {
-  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'my'>(initialLanguage);
-
   const toggleLanguage = () => {
-    const newLanguage = currentLanguage === 'en' ? 'my' : 'en';
-    setCurrentLanguage(newLanguage);
+    const newLanguage = selectedLanguage === 'en' ? 'my' : 'en';
     onLanguageChange(newLanguage);
   };
 
   return (
     <TouchableOpacity 
-      style={styles.container} 
+      style={styles.container}
       onPress={toggleLanguage}
-      activeOpacity={0.8}
     >
       <View style={styles.toggleContainer}>
         <Text style={[
           styles.text,
-          currentLanguage === 'en' ? styles.activeText : styles.inactiveText
+          selectedLanguage === 'en' ? styles.activeText : styles.inactiveText
         ]}>
-          English
+          ENG
         </Text>
         <Text style={styles.separator}>|</Text>
         <Text style={[
           styles.text,
-          currentLanguage === 'my' ? styles.activeText : styles.inactiveText
+          selectedLanguage === 'my' ? styles.activeText : styles.inactiveText
         ]}>
           မြန်မာ
         </Text>

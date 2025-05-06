@@ -23,10 +23,22 @@ import BackButton from '../ui_element/BackButton';
 
 const LoginPage = ({ navigation }: any) => {
   const isDarkMode = useColorScheme() === 'dark';
-  const dispatch = useDispatch(); // Add this line
+  const dispatch = useDispatch();
   const currentLanguage = useSelector((state: RootState) => state.language.currentLanguage);
+  
+  // Remove any useEffect for language syncing if present
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+
+  // Add useEffect to update language when screen comes into focus
+  React.useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      // This will ensure the component re-renders with the current language when focused
+      dispatch(setLanguage(currentLanguage));
+    });
+
+    return unsubscribe;
+  }, [navigation, currentLanguage]);
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
@@ -49,6 +61,11 @@ const LoginPage = ({ navigation }: any) => {
     dispatch(setLanguage(language));
   };
 
+  const handleForgotPassword = () => {
+    // For now, just log the action
+    console.log('Forgot password pressed');
+  };
+
   return (
     <SafeAreaView style={[styles.container, backgroundStyle]}>
       <StatusBar
@@ -63,16 +80,19 @@ const LoginPage = ({ navigation }: any) => {
         <LanguageToggle 
           onLanguageChange={handleLanguageChange}
           initialLanguage={currentLanguage}
+          selectedLanguage={currentLanguage}
         />
       </View>
       
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
       >
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           <View style={styles.content}>
             <View style={styles.logoContainer}>
@@ -113,6 +133,15 @@ const LoginPage = ({ navigation }: any) => {
               <Text style={styles.buttonText}>{t('login')}</Text>
             </TouchableOpacity>
             
+            <TouchableOpacity 
+              style={styles.forgotPasswordContainer}
+              onPress={handleForgotPassword}
+            >
+              <Text style={styles.forgotPasswordText}>
+                {currentLanguage === 'my' ? 'စကားဝှက်မေ့နေပါသလား?' : 'Forgot Password?'}
+              </Text>
+            </TouchableOpacity>
+
             <View style={styles.signUpContainer}>
               <Text style={styles.signUpText}>{t('noAccount')}</Text>
               <TouchableOpacity onPress={handleSignUp}>
@@ -208,14 +237,18 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start', // Changed from 'center' to 'flex-start'
+    paddingBottom: 40, // Add padding at the bottom
   },
-  content: {
-    flex: 1,
-    justifyContent: 'center', // Changed back to center
-    alignItems: 'center',
-    padding: 20,
-    paddingTop: 60, // Reduced top padding
+  forgotPasswordContainer: {
+    marginTop: 15,
+    marginBottom: 15,
+    alignSelf: 'center',
+  },
+  forgotPasswordText: {
+    color: '#1565C0',
+    fontSize: 14,
+    textDecorationLine: 'underline',
   },
 });
 
